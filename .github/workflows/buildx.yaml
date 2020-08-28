@@ -2,7 +2,7 @@ name: Buildx and push docker image
 
 on:
   schedule:
-    - cron: '0 10 * * *' # everyday at 10am
+    - cron: '0 1 * * *' # everyday at 1am
   pull_request:
     branches: main
   push:
