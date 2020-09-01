@@ -19,7 +19,7 @@ shokohsc/volume-nfs
 ````
 $> docker run \
 -d \
--p 2049:2049\
+-p 2049:2049 \
 --cap-add SYS_ADMIN \
 --name nfs \
 shokohsc/volume-nfs \
@@ -31,7 +31,7 @@ or
 ````
 $> docker run \
 -d \
--p 2049:2049\
+-p 2049:2049 \
 --cap-add SYS_ADMIN \
 --name nfs \
 -v $(pwd):/path/to/export \
