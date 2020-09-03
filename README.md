@@ -7,10 +7,10 @@ defaults to exporting `/srv`
 
 ````
 $> docker run \
+--rm \
 -ti \
 -p 2049:2049 \
---cap-add SYS_ADMIN \
---rm \
+--privileged \
 shokohsc/volume-nfs
 ````
 
@@ -20,7 +20,7 @@ shokohsc/volume-nfs
 $> docker run \
 -d \
 -p 2049:2049 \
---cap-add SYS_ADMIN \
+--privileged \
 --name nfs \
 shokohsc/volume-nfs \
 /path/to/export
@@ -32,7 +32,7 @@ or
 $> docker run \
 -d \
 -p 2049:2049 \
---cap-add SYS_ADMIN \
+--privileged \
 --name nfs \
 -v $(pwd):/path/to/export \
 shokohsc/volume-nfs \
