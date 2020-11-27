@@ -17,31 +17,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
-        uses: crazy-max/ghaction-docker-buildx@v3
-
-      - name: Cache Docker layers
-        uses: actions/cache@v2
-        id: cache
+      - name: Docker meta
+        id: docker_meta
+        uses: crazy-max/ghaction-docker-meta@v1
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
+          images: shokohsc/volume-nfs
 
-      - name: Docker Buildx (build)
-        run: |
-          export IMAGE_TAG=$(if [ 'refs/heads/main' = "${IMAGE_TAG}" ]; then echo "latest"; else echo "$IMAGE_TAG" | sed 's/refs\/\(heads\|tags\)\///g'; fi) && \
-          docker buildx build \
-            --cache-from "type=local,src=/tmp/.buildx-cache" \
-            --cache-to "type=local,dest=/tmp/.buildx-cache" \
-            --platform linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x \
-            --output "type=image,push=false" \
-            --tag "${IMAGE_NAME}:${IMAGE_TAG}" \
-            --file ./Dockerfile ./
-        env:
-          IMAGE_NAME: ${{ github.repository }}
-          IMAGE_TAG: ${{ github.ref }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -49,23 +35,12 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Docker Buildx (push)
-        run: |
-          export IMAGE_TAG=$(if [ 'refs/heads/main' = "${IMAGE_TAG}" ]; then echo "latest"; else echo "$IMAGE_TAG" | sed 's/refs\/\(heads\|tags\)\///g'; fi) && \
-          docker buildx build \
-            --cache-from "type=local,src=/tmp/.buildx-cache" \
-            --platform linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x \
-            --output "type=image,push=true" \
-            --tag "${IMAGE_NAME}:${IMAGE_TAG}" \
-            --file ./Dockerfile ./
-        env:
-          IMAGE_NAME: ${{ github.repository }}
-          IMAGE_TAG: ${{ github.ref }}
-
-      - name: Inspect image
-        run: |
-          export IMAGE_TAG=$(if [ 'refs/heads/main' = "${IMAGE_TAG}" ]; then echo "latest"; else echo "$IMAGE_TAG" | sed 's/refs\/\(heads\|tags\)\///g'; fi) && \
-          docker buildx imagetools inspect "${IMAGE_NAME}:${IMAGE_TAG}"
-        env:
-          IMAGE_NAME: ${{ github.repository }}
-          IMAGE_TAG: ${{ github.ref }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64,linux/386
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
